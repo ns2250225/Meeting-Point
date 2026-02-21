@@ -1,19 +1,42 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 import LocationInput from './components/LocationInput.vue';
 import SceneSelector from './components/SceneSelector.vue';
 import ResultCard from './components/ResultCard.vue';
-import { shallowRef } from 'vue';
 import AMapLoader from '@amap/amap-jsapi-loader';
 
+// Types
+interface Location {
+  lng: number;
+  lat: number;
+}
+
+interface Participant {
+  id: number;
+  name: string;
+  location: Location | null;
+  address: string;
+}
+
+interface Place {
+  id: string;
+  name: string;
+  location: Location;
+  address: string;
+  type: string;
+  distance?: number;
+  photos?: any[];
+  [key: string]: any;
+}
+
 // State
-const participants = ref([
+const participants = ref<Participant[]>([
   { id: 1, name: '参与者 1', location: null, address: '' },
   { id: 2, name: '参与者 2', location: null, address: '' }
 ]);
 const selectedScenes = ref<string[]>([]);
-const map = shallowRef(null);
-const searchResults = ref([]);
+// Removed unused map variable
+const searchResults = ref<Place[]>([]);
 const isSearching = ref(false);
 const showResults = ref(false);
 
@@ -40,8 +63,10 @@ const removeParticipant = (index: number) => {
 };
 
 const handleLocationSelect = (index: number, location: any) => {
-  participants.value[index].location = location.lnglat;
-  participants.value[index].address = location.name;
+  if (participants.value[index]) {
+    participants.value[index].location = location.lnglat;
+    participants.value[index].address = location.name;
+  }
 };
 
 const findMeetingPoint = async () => {
@@ -50,7 +75,7 @@ const findMeetingPoint = async () => {
     return;
   }
   
-  const validParticipants = participants.value.filter(p => p.location);
+  const validParticipants = participants.value.filter((p): p is Participant & { location: Location } => p.location !== null);
   if (validParticipants.length < 2) {
     alert('请至少填入两个参与者的位置');
     return;
@@ -62,6 +87,7 @@ const findMeetingPoint = async () => {
   let totalLat = 0;
   let totalLng = 0;
   validParticipants.forEach(p => {
+    // p.location is guaranteed not null by filter type predicate
     totalLat += p.location.lat;
     totalLng += p.location.lng;
   });
@@ -83,7 +109,10 @@ const findMeetingPoint = async () => {
 
 const searchNearby = (center: number[], types: string[]) => {
   return new Promise<void>((resolve) => {
-    if (!window.AMap) return resolve();
+    if (!(window as any).AMap) return resolve();
+
+    // Use (window as any).AMap or define global AMap
+    const AMap = (window as any).AMap;
 
     AMap.plugin(["AMap.PlaceSearch"], function() {
       const placeSearch = new AMap.PlaceSearch({
@@ -127,7 +156,7 @@ const initMap = () => {
     version: "2.0",
     plugins: ['AMap.PlaceSearch', 'AMap.AutoComplete'],
   }).then((AMap) => {
-    window.AMap = AMap;
+    (window as any).AMap = AMap;
     // Map instance is not strictly needed for just search, but good for visualization
     // We can initialize a hidden map or just use the API services
     // For visualization, we will render a map in the result section

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
   participant: { id: number; name: string; location: any; address: string };
@@ -16,10 +16,12 @@ const showDropdown = ref(false);
 
 const handleSearch = () => {
   if (!searchQuery.value.trim()) return;
-  if (!window.AMap) {
+  if (!(window as any).AMap) {
     alert('地图组件尚未加载完成，请稍候');
     return;
   }
+
+  const AMap = (window as any).AMap;
 
   isSearching.value = true;
   
