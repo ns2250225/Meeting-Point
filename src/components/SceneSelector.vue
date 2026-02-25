@@ -8,7 +8,8 @@ const emit = defineEmits(['update:modelValue']);
 const scenes = [
   '咖啡馆', '餐厅', '酒吧', '茶楼', '茶馆', 
   '电影院', 'KTV', '游戏厅', '健身房', 
-  '图书馆', '书店', '博物馆', '景点', '商场', '公园'
+  '图书馆', '书店', '博物馆', '景点', '商场', '公园',
+  '地铁站', '公交站'
 ];
 
 const toggleScene = (scene: string) => {
